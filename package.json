@@ -1,0 +1,25 @@
+{
+  "name": "dollar.js",
+  "version": "0.0.1",
+  "description": "Use React Hooks without React but with native if/for/switch/recursive functions.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "jest"
+  },
+  "author": "Bao Bo <bob432091@gmail.com>",
+  "license": "MIT",
+  "repository": "github:pinyin/dollar.ts",
+  "devDependencies": {
+    "@tsconfig/strictest": "^2.0.2",
+    "@types/jest": "^29.5.11",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "tsup": "^8.0.1"
+  }
+}
