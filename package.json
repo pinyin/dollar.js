@@ -1,5 +1,5 @@
 {
-  "name": "dollar.js",
+  "name": "dollar.ts",
   "version": "0.0.1",
   "description": "Use React Hooks without React but with native if/for/switch/recursive functions.",
   "main": "./dist/index.js",
@@ -14,7 +14,10 @@
   },
   "author": "Bao Bo <bob432091@gmail.com>",
   "license": "MIT",
-  "repository": "github:pinyin/dollar.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pinyin/dollar.ts.git"
+  },
   "devDependencies": {
     "@tsconfig/strictest": "^2.0.2",
     "@types/jest": "^29.5.11",

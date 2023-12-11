@@ -1,4 +1,4 @@
-# dollar.js
+# dollar.ts
 
 Use React Hooks without React**.
 
@@ -6,7 +6,7 @@ Use React Hooks without React**.
 
 ## Usage
 
-Instead of hooks' `useXXX` in React, dollar.js uses `$` to identify their limitations.
+Instead of hooks' `useXXX` in React, dollar.ts uses `$` to identify their limitations.
 So we'll call them ***Dollar Functions***.
 
 ### Create Dollar Functions
@@ -14,7 +14,7 @@ So we'll call them ***Dollar Functions***.
 Wrap your function with `$` to create a dollar function, then call it anywhere.
 
 ```typescript
-import {$, $useMemo} from "dollar.js";
+import {$, $useMemo} from "dollar.ts";
 
 const func = $((value: number, deps: Array<any>) => {
     return $useMemo(() => value, deps);
@@ -43,7 +43,7 @@ $merge()
 
 When `condition` is `true` or `false`, `Dollar Function` calls in `A` and `B` would have different values.
 
-###        
+###           
 
 Only synchronous dollar functions are supported now, asynchronous/generator functions support is planned.
 
