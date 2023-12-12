@@ -1,16 +1,15 @@
-import {$, $effect, $scope, $stack, scope$} from "./core";
+import {$, $effect, $scope, $stack} from "./core";
 import {isShallowlyEqual} from "../lib/is_shallowly_equal";
 
 export function $useMemo<T>(init: () => T, deps: Array<any>): T {
     const prevDeps = $readPrev(deps);
     const value = $stack<T | null>(() => null);
 
-    const shouldCompute = prevDeps === null || !isShallowlyEqual(deps, prevDeps);
-    $scope(shouldCompute);
-    if (shouldCompute) {
+    const $test = $scope(prevDeps === null || !isShallowlyEqual(deps, prevDeps));
+    if ($test.value) {
         value.current = init();
     }
-    scope$()
+    $test.exit;
 
     return value.current!;
 }
@@ -20,13 +19,12 @@ export function $useEffect(effect: () => () => void, deps: Array<any>) {
     });
     const prevDeps = $readPrev(deps);
 
-    const shouldCompute = prevDeps === null || !isShallowlyEqual(deps, prevDeps);
-    $scope(shouldCompute);
-    if (shouldCompute) {
+    const $shouldCompute = $scope(prevDeps === null || !isShallowlyEqual(deps, prevDeps));
+    if ($shouldCompute.value) {
         prevCleanup.current();
         prevCleanup.current = effect();
     }
-    scope$()
+    $shouldCompute.exit;
 }
 
 export function $useState<T>(init: () => T): State<T> {

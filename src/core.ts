@@ -81,26 +81,34 @@ export function $heap<T>(key: any, init: () => T): $Variable<T> {
     return context.scope.heap.get(key)!
 }
 
-export function $scope(key: any) {
+export function $scope<T = null>(branch?: T): { value: T, exit: null } {
     if (context === null) {
         throw ('No available context.');
     }
     const memories = $stack(() => new Map<any, Scope>()).current;
-    if (!memories.has(key)) {
-        memories.set(key, {heap: new Map(), stack: {values: [], cursor: 0}, parent: context.scope});
+    if (!memories.has(branch)) {
+        memories.set(branch, {heap: new Map(), stack: {values: [], cursor: 0}, parent: context.scope});
     }
-    context.scope = memories.get(key)!
+    context.scope = memories.get(branch)!
     context.scope.stack.cursor = 0;
-}
 
-export function scope$() {
-    if (context === null) {
-        throw ('No available context.');
+    const currentScope = context.scope;
+    return {
+        value: branch as T,
+        get exit() {
+            if (context === null) {
+                throw ('No available context.');
+            }
+            if (context.scope.parent === null) {
+                throw ("Not in scope.");
+            }
+            if (context.scope !== currentScope) {
+                throw ('Finishing wrong scope.');
+            }
+            context.scope = context.scope.parent;
+            return null;
+        }
     }
-    if (context.scope.parent === null) {
-        throw ("Not in scope.");
-    }
-    context.scope = context.scope.parent;
 }
 
 let context: Context | null
