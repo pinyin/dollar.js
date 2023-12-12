@@ -5,13 +5,15 @@ export function $<P extends Array<any>, R>(func: (...p: P) => R, onEffect?: $Eff
 
     return (...p: P): R => {
         context = {
-            stack: _rootStack,
-            heap: _heap,
+            memory: {
+                stack: _rootStack,
+                heap: _heap,
+            },
             handler: _handler,
         }
-        context.stack.cursor = 0;
+        context.memory.stack.cursor = 0;
         const result = func(...p);
-        if (context.stack.parent !== null) {
+        if (context.memory.stack.parent !== null) {
             throw ('Scope not close.');
         }
         return result;
@@ -36,42 +38,45 @@ export function $effect(effect: any) {
     return result;
 }
 
-export function $stack<T>(init: () => T): $Value<T> {
+export function $stack<T>(init: () => T): $Variable<T> {
     if (context === null) {
         throw ('No available context.');
     }
-    if (context.stack.values.length < context.stack.cursor) {
-        throw (`Stack length too short. Expecting ${context.stack.cursor}, got ${context.stack.values.length}`);
+
+    const stack = context.memory.stack;
+
+    if (stack.values.length < stack.cursor) {
+        throw (`Stack length too short. Expecting ${stack.cursor}, got ${stack.values.length}`);
     }
 
-    if (context.stack.values.length === context.stack.cursor) {
+    if (stack.values.length === stack.cursor) {
         const _context = context;
         context = null;
-        _context.stack.values.push(new $Value(init()));
+        _context.memory.stack.values.push(new $Variable(init()));
         context = _context;
     }
 
-    const result = context.stack.values[context.stack.cursor]!;
-    context.stack.cursor++;
+    const result = stack.values[stack.cursor]!;
+    stack.cursor++;
     return result;
 }
 
-export class $Value<T> {
+export class $Variable<T> {
     constructor(public current: T) {
     }
 }
 
-export function $heap<T>(key: any, init: () => T): $Value<T> {
+export function $heap<T>(key: any, init: () => T): $Variable<T> {
     if (context === null) {
         throw ('No available context.');
     }
-    if (!context.heap.has(key)) {
+    if (!context.memory.heap.has(key)) {
         const _context = context;
         context = null;
-        _context.heap.set(key, new $Value(init()))
+        _context.memory.heap.set(key, new $Variable(init()))
         context = _context;
     }
-    return context.heap.get(key)!
+    return context.memory.heap.get(key)!
 }
 
 export function $scope(key: any) {
@@ -80,30 +85,34 @@ export function $scope(key: any) {
     }
     const branches = $stack(() => new Map<any, Stack>()).current;
     if (!branches.has(key)) {
-        branches.set(key, {values: [], parent: context.stack, cursor: 0});
+        branches.set(key, {values: [], parent: context.memory.stack, cursor: 0});
     }
-    context.stack = branches.get(key)!;
-    context.stack.cursor = 0;
+    context.memory.stack = branches.get(key)!;
+    context.memory.stack.cursor = 0;
 }
 
 export function scope$() {
     if (context === null) {
         throw ('No available context.');
     }
-    if (context.stack.parent === null) {
+    if (context.memory.stack.parent === null) {
         throw ("Not in scope.");
     }
-    context.stack = context.stack.parent!;
+    context.memory.stack = context.memory.stack.parent!;
 }
 
 let context: Context | null
 
 type Context = {
-    stack: Stack,
-    heap: Heap,
+    memory: Memory
     handler: $EffectHandler | null
 };
 
-type Stack = { values: Array<$Value<any>>, parent: Stack | null, cursor: number };
+type Memory = {
+    stack: Stack,
+    heap: Heap,
+}
 
-type Heap = Map<any, $Value<any>>;
+type Stack = { values: Array<$Variable<any>>, parent: Stack | null, cursor: number };
+
+type Heap = Map<any, $Variable<any>>;
