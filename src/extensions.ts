@@ -6,7 +6,7 @@ export function $useMemo<T>(init: () => T, deps: Array<any>): T {
     const value = $stack<T | null>(() => null);
 
     const $test = $scope(prevDeps === null || !isShallowlyEqual(deps, prevDeps));
-    if ($test.value) {
+    if ($test.branch) {
         value.current = init();
     }
     $test.exit;
@@ -20,7 +20,7 @@ export function $useEffect(effect: () => () => void, deps: Array<any>) {
     const prevDeps = $readPrev(deps);
 
     const $shouldCompute = $scope(prevDeps === null || !isShallowlyEqual(deps, prevDeps));
-    if ($shouldCompute.value) {
+    if ($shouldCompute.branch) {
         prevCleanup.current();
         prevCleanup.current = effect();
     }

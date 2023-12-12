@@ -81,7 +81,7 @@ export function $heap<T>(key: any, init: () => T): $Variable<T> {
     return context.scope.heap.get(key)!
 }
 
-export function $scope<T = null>(branch?: T): { value: T, exit: null } {
+export function $scope<T = null>(branch?: T): $Scope<T> {
     if (context === null) {
         throw ('No available context.');
     }
@@ -94,7 +94,7 @@ export function $scope<T = null>(branch?: T): { value: T, exit: null } {
 
     const currentScope = context.scope;
     return {
-        value: branch as T,
+        branch: branch,
         get exit() {
             if (context === null) {
                 throw ('No available context.');
@@ -108,7 +108,12 @@ export function $scope<T = null>(branch?: T): { value: T, exit: null } {
             context.scope = context.scope.parent;
             return null;
         }
-    }
+    } as $Scope<T>
+}
+
+export type $Scope<T> = {
+    branch: T,
+    get exit(): null,
 }
 
 let context: Context | null
