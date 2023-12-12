@@ -12,7 +12,7 @@ export function $<P extends Array<any>, R>(func: (...p: P) => R, onEffect?: $Eff
         context.stack.cursor = 0;
         const result = func(...p);
         if (context.stack.parent !== null) {
-            throw ('More $fork than $merge.');
+            throw ('Scope not close.');
         }
         return result;
     }
@@ -74,7 +74,7 @@ export function $heap<T>(key: any, init: () => T): $Value<T> {
     return context.heap.get(key)!
 }
 
-export function $fork(key: any) {
+export function $scope(key: any) {
     if (context === null) {
         throw ('No available context.');
     }
@@ -86,12 +86,12 @@ export function $fork(key: any) {
     context.stack.cursor = 0;
 }
 
-export function $merge() {
+export function scope$() {
     if (context === null) {
         throw ('No available context.');
     }
     if (context.stack.parent === null) {
-        throw ("More $merge than $fork.");
+        throw ("Not in scope.");
     }
     context.stack = context.stack.parent!;
 }

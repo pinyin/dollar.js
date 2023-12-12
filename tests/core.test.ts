@@ -1,4 +1,4 @@
-import {$, $effect, $fork, $merge, $stack} from "../src";
+import {$, $effect, $scope, $stack, scope$} from "../src";
 import {$heap} from "../src/core";
 
 describe('core logic of dollar-js', () => {
@@ -70,12 +70,12 @@ describe('core logic of dollar-js', () => {
         });
     })
 
-    describe('$fork and $merge', () => {
+    describe('$scope', () => {
         test('should create new execution context', () => {
             const func = $((value: number) => {
-                $fork(value)
+                $scope(value)
                 const result = $stack(() => value);
-                $merge()
+                scope$()
                 return result;
             });
 
