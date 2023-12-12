@@ -1,9 +1,9 @@
-import {$, $effect, $fork, $merge, $value} from "./core";
+import {$, $effect, $fork, $merge, $stack} from "./core";
 import {isShallowlyEqual} from "../lib/is_shallowly_equal";
 
 export function $useMemo<T>(init: () => T, deps: Array<any>): T {
     const prevDeps = $readPrev(deps);
-    const value = $value<T | null>(() => null);
+    const value = $stack<T | null>(() => null);
 
     const shouldCompute = prevDeps === null || !isShallowlyEqual(deps, prevDeps);
     $fork(shouldCompute);
@@ -16,7 +16,7 @@ export function $useMemo<T>(init: () => T, deps: Array<any>): T {
 }
 
 export function $useEffect(effect: () => () => void, deps: Array<any>) {
-    const prevCleanup = $value(() => () => {
+    const prevCleanup = $stack(() => () => {
     });
     const prevDeps = $readPrev(deps);
 
@@ -30,7 +30,7 @@ export function $useEffect(effect: () => () => void, deps: Array<any>) {
 }
 
 export function $useState<T>(init: () => T): State<T> {
-    const value = $value(init);
+    const value = $stack(init);
 
     const setter = $((to: T) => {
         value.current = to;
@@ -49,7 +49,7 @@ export class State<T> {
 }
 
 export function $readPrev<T>(current: T): T | null {
-    const value = $value<T | null>(() => null);
+    const value = $stack<T | null>(() => null);
     const result = value.current;
     value.current = current;
     return result;

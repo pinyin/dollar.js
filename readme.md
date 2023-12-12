@@ -43,7 +43,7 @@ $merge()
 
 When `condition` is `true` or `false`, `Dollar Function` calls in `A` and `B` would have different values.
 
-###           
+###              
 
 Only synchronous dollar functions are supported now, asynchronous/generator functions support is planned.
 
