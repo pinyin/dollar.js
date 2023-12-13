@@ -1,6 +1,6 @@
 export function $<P extends Array<any>, R>(func: (...p: P) => R, onEffect?: $EffectHandlerCreator, scope?: $Scope): (...p: P) => R {
-    const stack: $Stack = scope?.stack ?? new Array<$Variable<any>>();
-    const heap: $Heap = scope?.heap ?? new Map<any, $Variable<any>>();
+    const stack = scope?.stack ?? new Array<$Variable<any>>();
+    const heap = scope?.heap ?? new Map<any, $Variable<any>>();
     const handler = onEffect?.(currentScope?.handler ?? null) ?? null;
 
     return (...p: P): R => {
@@ -23,12 +23,9 @@ export type $EffectHandler = (effect: any) => any;
 export type $EffectHandlerCreator = (parent: $EffectHandler | null) => any;
 
 export type $Scope = {
-    stack: $Stack,
-    heap: $Heap,
+    stack: Array<$Variable<any>>
+    heap: Map<any, $Variable<any>>
 }
-
-export type $Stack = Array<$Variable<any>>
-export type $Heap = Map<any, $Variable<any>>;
 
 export function $effect(effect: any) {
     if (currentScope === null) {
