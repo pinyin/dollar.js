@@ -1,12 +1,10 @@
 export function $<P extends Array<any>, R>(func: (...p: P) => R, onEffect?: $EffectHandlerCreator, scope?: $Scope): (...p: P) => R {
-    const stack = scope?.stack ?? new Array<$Variable<any>>();
-    const heap = scope?.heap ?? new Map<any, $Variable<any>>();
+    const stack = scope?.[$StackKey] ?? new Array<$Variable<any>>();
     const handler = onEffect?.(currentScope?.handler ?? null) ?? null;
 
     return (...p: P): R => {
         currentScope = {
-            stack: stack,
-            heap: heap,
+            [$StackKey]: stack,
             parent: null,
             cursor: 0,
             handler: handler,
@@ -23,9 +21,14 @@ export type $EffectHandler = (effect: any) => any;
 export type $EffectHandlerCreator = (parent: $EffectHandler | null) => any;
 
 export type $Scope = {
-    stack: Array<$Variable<any>>
-    heap: Map<any, $Variable<any>>
+    [$StackKey]: Array<$Variable<any>>
 }
+
+export function is$Scope(obj: any): obj is $Scope {
+    return obj.hasOwnProperty($StackKey);
+}
+
+export const $StackKey = Symbol('scope');
 
 export function $effect(effect: any) {
     if (currentScope === null) {
@@ -38,23 +41,23 @@ export function $effect(effect: any) {
     return result;
 }
 
-export function $stack<T>(init: () => T): $Variable<T> {
+export function $variable<T>(init: () => T): $Variable<T> {
     if (currentScope === null) {
         throw ('No available scope.');
     }
 
-    if (currentScope.stack.length < currentScope.cursor) {
-        throw (`Stack length too short. Expecting ${currentScope.cursor}, got ${currentScope.stack.length}`);
+    if (currentScope[$StackKey].length < currentScope.cursor) {
+        throw (`Stack length too short. Expecting ${currentScope.cursor}, got ${currentScope[$StackKey].length}`);
     }
 
-    if (currentScope.stack.length === currentScope.cursor) {
+    if (currentScope[$StackKey].length === currentScope.cursor) {
         const _scope = currentScope;
         currentScope = null;
-        _scope.stack.push(new $Variable(init()));
+        _scope[$StackKey].push(new $Variable(init()));
         currentScope = _scope;
     }
 
-    const result = currentScope.stack[currentScope.cursor]!;
+    const result = currentScope[$StackKey][currentScope.cursor]!;
     currentScope.cursor++;
     return result;
 }
@@ -64,29 +67,14 @@ export class $Variable<T> {
     }
 }
 
-export function $heap<T>(key: any, init: () => T): $Variable<T> {
-    if (currentScope === null) {
-        throw ('No available scope.');
-    }
-
-    if (!currentScope.heap.has(key)) {
-        const _scope = currentScope;
-        currentScope = null;
-        _scope.heap.set(key, new $Variable(init()))
-        currentScope = _scope;
-    }
-    return currentScope.heap.get(key)!
-}
-
 export function $branch<T>(branch: T): $Branch<T> {
     if (currentScope === null) {
         throw ('No available scope.');
     }
-    const branches = $stack(() => new Map<T, InternalScope>()).current;
+    const branches = $variable(() => new Map<T, InternalScope>()).current;
     if (!branches.has(branch)) {
         branches.set(branch, {
-            heap: new Map(),
-            stack: [],
+            [$StackKey]: [],
             parent: currentScope,
             cursor: 0,
             handler: currentScope.handler

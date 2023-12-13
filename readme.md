@@ -14,7 +14,7 @@ So we'll call them ***Dollar Functions***.
 Wrap your function with `$` to create a dollar function, then call it anywhere.
 
 ```typescript
-import {$, $useMemo} from "dollar.ts";
+import {$, $useMemo} from "dollar.ts/core.ts";
 
 const func = $((value: number, deps: Array<any>) => {
     return $useMemo(() => value, deps);

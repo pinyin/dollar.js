@@ -1,4 +1,4 @@
-export {$, $effect, $stack, $heap, $branch, $Variable} from './core';
+export {$, $effect, $variable, $branch, $Variable, $StackKey, is$Scope} from './core';
 export {$readPrev, $useEffect, $useMemo, $useState} from './extensions';
 
-export type {$EffectHandler, $EffectHandlerCreator} from './core'
+export type {$Scope, $EffectHandler, $EffectHandlerCreator} from './core'

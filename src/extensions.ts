@@ -1,9 +1,9 @@
-import {$, $branch, $effect, $stack} from "./core";
+import {$, $branch, $effect, $variable} from "./core";
 import {isShallowlyEqual} from "../lib/is_shallowly_equal";
 
 export function $useMemo<T>(init: () => T, deps: Array<any>): T {
     const prevDeps = $readPrev(deps);
-    const value = $stack<T | null>(() => null);
+    const value = $variable<T | null>(() => null);
 
     const $test = $branch(prevDeps === null || !isShallowlyEqual(deps, prevDeps));
     if ($test.branch) {
@@ -15,7 +15,7 @@ export function $useMemo<T>(init: () => T, deps: Array<any>): T {
 }
 
 export function $useEffect(effect: () => () => void, deps: Array<any>) {
-    const prevCleanup = $stack(() => () => {
+    const prevCleanup = $variable(() => () => {
     });
     const prevDeps = $readPrev(deps);
 
@@ -28,7 +28,7 @@ export function $useEffect(effect: () => () => void, deps: Array<any>) {
 }
 
 export function $useState<T>(init: () => T): State<T> {
-    const value = $stack(init);
+    const value = $variable(init);
 
     const setter = $((to: T) => {
         value.current = to;
@@ -47,7 +47,7 @@ export class State<T> {
 }
 
 export function $readPrev<T>(current: T): T | null {
-    const value = $stack<T | null>(() => null);
+    const value = $variable<T | null>(() => null);
     const result = value.current;
     value.current = current;
     return result;
