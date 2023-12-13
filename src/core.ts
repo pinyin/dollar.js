@@ -1,5 +1,5 @@
-export function $<P extends Array<any>, R>(func: (...p: P) => R, onEffect?: $EffectHandlerCreator, scope?: $Scope): (...p: P) => R {
-    scope = scope ?? new Array<$Variable<any>>()
+export function $<P extends Array<any>, R>(func: (...p: P) => R, onEffect?: $EffectHandlerCreator, scope?: any[]): (...p: P) => R {
+    scope = scope ?? []
     const handler = onEffect?.(currentHandler ?? null) ?? null;
 
     return (...p: P): R => {
@@ -16,8 +16,6 @@ export function $<P extends Array<any>, R>(func: (...p: P) => R, onEffect?: $Eff
 
 export type $EffectHandler = (effect: any) => any;
 export type $EffectHandlerCreator = (parent: $EffectHandler | null) => any;
-
-export type $Scope = Array<$Variable<any>>
 
 export function $effect(effect: any) {
     if (currentScope === null) {
@@ -47,17 +45,24 @@ export function $variable<T>(init: () => T): $Variable<T> {
         setContext([null, null, null])
         const initialValue = init()
         setContext(context)
-        currentScope.push(new $Variable(initialValue));
+        currentScope.push(initialValue);
     }
 
-    const result = currentScope[currentCursor!]!;
+    const [scope, cursor] = getContext();
     currentCursor = currentCursor! + 1;
-    return result;
+    return {
+        get current(): T {
+            return scope![cursor!]!
+        },
+        set current(to: T) {
+            scope![cursor!] = to
+        },
+    };
 }
 
-export class $Variable<T> {
-    constructor(public current: T) {
-    }
+export type $Variable<T> = {
+    get current(): T;
+    set current(to: T);
 }
 
 export function $branch<T>(branch: T): $Branch<T> {
@@ -66,9 +71,9 @@ export function $branch<T>(branch: T): $Branch<T> {
     }
 
     const context = getContext()
-    const branches = $variable(() => new Map<T, $Scope>()).current;
+    const branches = $variable(() => new Map<T, []>()).current;
     if (!branches.has(branch)) {
-        branches.set(branch, new Array<$Variable<any>>());
+        branches.set(branch, []);
     }
     const newScope = branches.get(branch)!;
     setContext([newScope, 0, currentHandler])
@@ -92,7 +97,7 @@ export type $Branch<T> = {
     get exit(): null,
 }
 
-let currentScope: $Scope | null
+let currentScope: any[] | null
 let currentCursor: number | null
 let currentHandler: $EffectHandler | null
 
