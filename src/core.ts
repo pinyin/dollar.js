@@ -1,64 +1,64 @@
-export function $<P extends Array<any>, R>(func: (...p: P) => R, onEffect?: $EffectHandlerCreator): $DollarFunction<P, R> {
-    const _rootStack: Stack = {values: [], cursor: 0};
-    const _heap: Heap = new Map();
-    const _handler = onEffect?.(context?.handler ?? null) ?? null;
+export function $<P extends Array<any>, R>(func: (...p: P) => R, onEffect?: $EffectHandlerCreator, scope?: $Scope): (...p: P) => R {
+    const stack: $Stack = scope?.stack ?? new Array<$Variable<any>>();
+    const heap: $Heap = scope?.heap ?? new Map<any, $Variable<any>>();
+    const handler = onEffect?.(currentScope?.handler ?? null) ?? null;
 
     return (...p: P): R => {
-        context = {
-            scope: {
-                stack: _rootStack,
-                heap: _heap,
-                parent: null,
-            },
-            handler: _handler,
+        currentScope = {
+            stack: stack,
+            heap: heap,
+            parent: null,
+            cursor: 0,
+            handler: handler,
         }
-        context.scope.stack.cursor = 0;
         const result = func(...p);
-        if (context.scope.parent !== null) {
+        if (currentScope?.parent !== null) {
             throw ('Scope not close.');
         }
         return result;
-    }
-}
-
-export type $DollarFunction<P extends Array<any>, R> = {
-    (...params: P): R;
+    };
 }
 
 export type $EffectHandler = (effect: any) => any;
 export type $EffectHandlerCreator = (parent: $EffectHandler | null) => any;
 
+export type $Scope = {
+    stack: $Stack,
+    heap: $Heap,
+}
+
+export type $Stack = Array<$Variable<any>>
+export type $Heap = Map<any, $Variable<any>>;
+
 export function $effect(effect: any) {
-    if (context === null) {
-        throw ('No available context.');
+    if (currentScope === null) {
+        throw ('No available scope.');
     }
-    const _context = context;
-    context = null
-    const result = _context.handler?.(effect);
-    context = _context;
+    const scope = currentScope;
+    currentScope = null
+    const result = scope.handler?.(effect);
+    currentScope = scope;
     return result;
 }
 
 export function $stack<T>(init: () => T): $Variable<T> {
-    if (context === null) {
-        throw ('No available context.');
+    if (currentScope === null) {
+        throw ('No available scope.');
     }
 
-    const stack = context.scope.stack;
-
-    if (stack.values.length < stack.cursor) {
-        throw (`Stack length too short. Expecting ${stack.cursor}, got ${stack.values.length}`);
+    if (currentScope.stack.length < currentScope.cursor) {
+        throw (`Stack length too short. Expecting ${currentScope.cursor}, got ${currentScope.stack.length}`);
     }
 
-    if (stack.values.length === stack.cursor) {
-        const _context = context;
-        context = null;
-        _context.scope.stack.values.push(new $Variable(init()));
-        context = _context;
+    if (currentScope.stack.length === currentScope.cursor) {
+        const _scope = currentScope;
+        currentScope = null;
+        _scope.stack.push(new $Variable(init()));
+        currentScope = _scope;
     }
 
-    const result = stack.values[stack.cursor]!;
-    stack.cursor++;
+    const result = currentScope.stack[currentScope.cursor]!;
+    currentScope.cursor++;
     return result;
 }
 
@@ -68,45 +68,51 @@ export class $Variable<T> {
 }
 
 export function $heap<T>(key: any, init: () => T): $Variable<T> {
-    if (context === null) {
-        throw ('No available context.');
+    if (currentScope === null) {
+        throw ('No available scope.');
     }
 
-    if (!context.scope.heap.has(key)) {
-        const _context = context;
-        context = null;
-        _context.scope.heap.set(key, new $Variable(init()))
-        context = _context;
+    if (!currentScope.heap.has(key)) {
+        const _scope = currentScope;
+        currentScope = null;
+        _scope.heap.set(key, new $Variable(init()))
+        currentScope = _scope;
     }
-    return context.scope.heap.get(key)!
+    return currentScope.heap.get(key)!
 }
 
 export function $branch<T>(branch: T): $Branch<T> {
-    if (context === null) {
-        throw ('No available context.');
+    if (currentScope === null) {
+        throw ('No available scope.');
     }
-    const branches = $stack(() => new Map<T, Scope>()).current;
+    const branches = $stack(() => new Map<T, InternalScope>()).current;
     if (!branches.has(branch)) {
-        branches.set(branch, {heap: new Map(), stack: {values: [], cursor: 0}, parent: context.scope});
+        branches.set(branch, {
+            heap: new Map(),
+            stack: [],
+            parent: currentScope,
+            cursor: 0,
+            handler: currentScope.handler
+        });
     }
-    const currentScope = branches.get(branch)!;
-    context.scope = currentScope
-    context.scope.stack.cursor = 0;
+    const newScope = branches.get(branch)!;
+    currentScope = newScope
+    currentScope.cursor = 0;
 
     return {
         branch: branch,
         branches: branches,
         get exit(): null {
-            if (context === null) {
-                throw ('No available context.');
+            if (currentScope === null) {
+                throw ('No available scope.');
             }
-            if (context.scope.parent === null) {
+            if (currentScope.parent === null) {
                 throw ("Not in scope.");
             }
-            if (context.scope !== currentScope) {
-                throw ('Finishing wrong scope.');
+            if (currentScope !== newScope) {
+                throw ('Exiting from unexpected scope.');
             }
-            context.scope = context.scope.parent;
+            currentScope = currentScope.parent;
             return null;
         }
     } as $Branch<T>
@@ -118,19 +124,10 @@ export type $Branch<T> = {
     get exit(): null,
 }
 
-let context: Context | null
+let currentScope: InternalScope | null
 
-type Context = {
-    scope: Scope
+type InternalScope = {
+    parent: InternalScope | null,
+    cursor: number,
     handler: $EffectHandler | null
-};
-
-type Scope = {
-    stack: Stack,
-    heap: Heap,
-    parent: Scope | null,
-}
-
-type Stack = { values: Array<$Variable<any>>, cursor: number };
-
-type Heap = Map<any, $Variable<any>>;
+} & $Scope
