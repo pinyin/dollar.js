@@ -81,21 +81,22 @@ export function $heap<T>(key: any, init: () => T): $Variable<T> {
     return context.scope.heap.get(key)!
 }
 
-export function $scope<T = null>(branch?: T): $Scope<T> {
+export function $branch<T>(branch: T): $Branch<T> {
     if (context === null) {
         throw ('No available context.');
     }
-    const memories = $stack(() => new Map<any, Scope>()).current;
-    if (!memories.has(branch)) {
-        memories.set(branch, {heap: new Map(), stack: {values: [], cursor: 0}, parent: context.scope});
+    const branches = $stack(() => new Map<T, Scope>()).current;
+    if (!branches.has(branch)) {
+        branches.set(branch, {heap: new Map(), stack: {values: [], cursor: 0}, parent: context.scope});
     }
-    context.scope = memories.get(branch)!
+    const currentScope = branches.get(branch)!;
+    context.scope = currentScope
     context.scope.stack.cursor = 0;
 
-    const currentScope = context.scope;
     return {
         branch: branch,
-        get exit() {
+        branches: branches,
+        get exit(): null {
             if (context === null) {
                 throw ('No available context.');
             }
@@ -108,11 +109,12 @@ export function $scope<T = null>(branch?: T): $Scope<T> {
             context.scope = context.scope.parent;
             return null;
         }
-    } as $Scope<T>
+    } as $Branch<T>
 }
 
-export type $Scope<T> = {
-    branch: T,
+export type $Branch<T> = {
+    readonly branch: T,
+    readonly branches: Map<T, never> // only used for cleaning up other branches
     get exit(): null,
 }
 

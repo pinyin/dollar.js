@@ -1,8 +1,7 @@
-import {$, $effect, $scope, $stack} from "../src";
-import {$heap} from "../src/core";
+import {$, $branch, $effect, $heap, $stack} from "../src";
 
 describe('core logic of dollar-js', () => {
-    describe('$ and $Value', () => {
+    describe('$ and $Variable', () => {
         describe('$stack', () => {
             test('should save value in order', () => {
                 const inc = $(() => {
@@ -73,7 +72,7 @@ describe('core logic of dollar-js', () => {
     describe('$scope', () => {
         test('should create new variables stack', () => {
             const func = $((value: number) => {
-                const $results = $scope(value)
+                const $results = $branch(value)
                 const result = $stack(() => value);
                 $results.exit;
                 return result;
@@ -90,7 +89,7 @@ describe('core logic of dollar-js', () => {
 
         test('should create new variables heap', () => {
             const func = $((scope: string, value: number) => {
-                const $testingHeap = $scope(scope)
+                const $testingHeap = $branch(scope)
                 const result = $heap(value, () => 0);
                 $testingHeap.exit;
                 return result;

@@ -1,11 +1,11 @@
-import {$, $effect, $scope, $stack} from "./core";
+import {$, $branch, $effect, $stack} from "./core";
 import {isShallowlyEqual} from "../lib/is_shallowly_equal";
 
 export function $useMemo<T>(init: () => T, deps: Array<any>): T {
     const prevDeps = $readPrev(deps);
     const value = $stack<T | null>(() => null);
 
-    const $test = $scope(prevDeps === null || !isShallowlyEqual(deps, prevDeps));
+    const $test = $branch(prevDeps === null || !isShallowlyEqual(deps, prevDeps));
     if ($test.branch) {
         value.current = init();
     }
@@ -19,7 +19,7 @@ export function $useEffect(effect: () => () => void, deps: Array<any>) {
     });
     const prevDeps = $readPrev(deps);
 
-    const $shouldCompute = $scope(prevDeps === null || !isShallowlyEqual(deps, prevDeps));
+    const $shouldCompute = $branch(prevDeps === null || !isShallowlyEqual(deps, prevDeps));
     if ($shouldCompute.branch) {
         prevCleanup.current();
         prevCleanup.current = effect();
