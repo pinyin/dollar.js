@@ -1,3 +1,5 @@
+import {isDefined} from "../lib/is_defined";
+
 export function $<P extends Array<any>, R>(func: (...p: P) => R, onEffect?: $EffectHandlerCreator, scope?: any[]): (...p: P) => R {
     scope = scope ?? []
     const handler = onEffect?.(currentHandler ?? null) ?? null;
@@ -18,7 +20,7 @@ export type $EffectHandler = (effect: any) => any;
 export type $EffectHandlerCreator = (parent: $EffectHandler | null) => any;
 
 export function $effect(effect: any) {
-    if (currentScope === null) {
+    if (!isDefined(currentScope)) {
         throw ('No available scope.');
     }
 
@@ -32,20 +34,24 @@ export function $effect(effect: any) {
 }
 
 export function $variable<T>(init: () => T): $Variable<T> {
-    if (currentScope === null) {
+    if (!isDefined(currentScope) || !isDefined(currentCursor)) {
         throw ('No available scope.');
     }
 
-    if (currentScope.length < currentCursor!) {
-        throw (`Stack length too short. Expecting ${currentHandler}, got ${currentScope.length}`);
+    if (currentScope.length < currentCursor) {
+        throw (`Stack length too short. Expecting ${currentCursor}, got ${currentScope.length}`);
     }
 
-    if (currentScope.length === currentCursor!) {
+    if (currentScope.length === currentCursor || !isDefined(currentScope[currentCursor])) {
         const context = getContext()
         setContext([null, null, null])
         const initialValue = init()
         setContext(context)
-        currentScope.push(initialValue);
+        if (currentScope.length === currentCursor) {
+            currentScope.push(initialValue);
+        } else {
+            currentScope[currentCursor] = initialValue;
+        }
     }
 
     const [scope, cursor] = getContext();
@@ -66,7 +72,7 @@ export type $Variable<T> = {
 }
 
 export function $branch<T>(branch: T): $Branch<T> {
-    if (currentScope === null) {
+    if (!isDefined(currentScope)) {
         throw ('No available scope.');
     }
 
