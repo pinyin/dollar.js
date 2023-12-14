@@ -1,6 +1,6 @@
 import {isDefined} from "../lib/is_defined";
 
-export function $<P extends Array<any>, R>(func: (...p: P) => R, onEffect?: $EffectHandlerCreator, scope?: any[]): (...p: P) => R {
+export function $<P extends Array<any>, R>(func: (...p: P) => R, onEffect?: $EffectHandlerCreator, scope?: $Variable<any>[]): (...p: P) => R {
     scope = scope ?? []
     const handler = onEffect?.(currentHandler ?? null) ?? null;
 
@@ -42,29 +42,22 @@ export function $variable<T>(init: () => T): $Variable<T> {
         throw (`Stack length too short. Expecting ${currentCursor}, got ${currentScope.length}`);
     }
 
-    if (currentScope.length === currentCursor) {
+    if (!(currentScope[currentCursor]?.didInit ?? false)) {
         const context = getContext()
         setContext([null, null, null])
-        const initialValue = init()
+        const initialValue = {didInit: true, current: init()}
         setContext(context)
         currentScope.push(initialValue);
     }
 
-    const [scope, cursor] = getContext();
+    const result = currentScope[currentCursor]!;
     currentCursor = currentCursor! + 1;
-    return {
-        get current(): T {
-            return scope![cursor!]!
-        },
-        set current(to: T) {
-            scope![cursor!] = to
-        },
-    };
+    return result;
 }
 
 export type $Variable<T> = {
-    get current(): T;
-    set current(to: T);
+    didInit: boolean
+    current: T
 }
 
 export function $branch<T>(branch: T): $Branch<T> {
@@ -99,7 +92,7 @@ export type $Branch<T> = {
     get exit(): null,
 }
 
-let currentScope: any[] | null
+let currentScope: $Variable<any>[] | null
 let currentCursor: number | null
 let currentHandler: $EffectHandler | null
 
