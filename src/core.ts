@@ -42,16 +42,12 @@ export function $variable<T>(init: () => T): $Variable<T> {
         throw (`Stack length too short. Expecting ${currentCursor}, got ${currentScope.length}`);
     }
 
-    if (currentScope.length === currentCursor || !isDefined(currentScope[currentCursor])) {
+    if (currentScope.length === currentCursor) {
         const context = getContext()
         setContext([null, null, null])
         const initialValue = init()
         setContext(context)
-        if (currentScope.length === currentCursor) {
-            currentScope.push(initialValue);
-        } else {
-            currentScope[currentCursor] = initialValue;
-        }
+        currentScope.push(initialValue);
     }
 
     const [scope, cursor] = getContext();
