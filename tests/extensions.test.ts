@@ -4,7 +4,7 @@ import {StateUpdated} from "../src/extensions";
 describe('extensions of dollar-js', () => {
     describe('$useMemo', () => {
         test('should cache value on deps change', () => {
-            const func = $((value: number, deps: Array<any>) => {
+            const func = $((value: number, deps: any[]) => {
                 return $useMemo(() => value, deps);
             });
             expect(func(1, [])).toBe(1);
