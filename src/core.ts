@@ -27,10 +27,10 @@ export function $effect(effect: any) {
     const context = getContext()
     const handler = context[2];
     setContext([null, null, null])
-    handler?.(effect)
+    const result = handler?.(effect)
     setContext(context);
 
-    return null;
+    return result;
 }
 
 export function $variable<T>(init: () => T): $Variable<T> {

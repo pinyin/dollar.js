@@ -1,5 +1,5 @@
 import {$, $useEffect, $useMemo, $useState} from "../src";
-import {StateUpdated} from "../src/extensions";
+import {StateUpdated, useEffects} from "../src/extensions";
 
 describe('extensions of dollar-js', () => {
     describe('$useMemo', () => {
@@ -20,18 +20,23 @@ describe('extensions of dollar-js', () => {
         test('should cache value on deps change', () => {
             let effects = 0;
             let disposes = 0;
+            const cleanups = new Set<() => void>()
             const func = $((deps: Array<any>) => {
                 return $useEffect(() => {
                     effects++;
                     return () => disposes++;
                 }, deps);
-            });
+            }, useEffects(cleanups));
             func([]);
             expect([effects, disposes]).toEqual([1, 0]);
             func([]);
             expect([effects, disposes]).toEqual([1, 0]);
             func(['a']);
             expect([effects, disposes]).toEqual([2, 1]);
+            func(['b']);
+            expect([effects, disposes]).toEqual([3, 2]);
+            cleanups.forEach((c) => c());
+            expect([effects, disposes]).toEqual([3, 3]);
         });
     })
 
