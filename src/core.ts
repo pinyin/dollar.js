@@ -33,7 +33,7 @@ export function $effect(effect: any) {
     return result;
 }
 
-export function $variable<T>(init: () => T): $Variable<T> {
+export function $variable<T>(define: () => T): $Variable<T> {
     if (!isDefined(currentScope) || !isDefined(currentCursor)) {
         throw ('No available scope.');
     }
@@ -42,21 +42,32 @@ export function $variable<T>(init: () => T): $Variable<T> {
         throw (`Stack length too short. Expecting ${currentCursor}, got ${currentScope.length}`);
     }
 
-    if (!(currentScope[currentCursor]?.didInit ?? false)) {
+    if (currentScope.length === currentCursor || currentScope[currentCursor] === undefined) {
         const context = getContext()
         setContext([null, null, null])
-        const initialValue = {didInit: true, current: init()}
+        const initialValue = define()
         setContext(context)
-        currentScope.push(initialValue);
+        if (currentScope.length === currentCursor) {
+            currentScope.push(initialValue);
+        } else {
+            currentScope[currentCursor] = initialValue;
+        }
     }
 
-    const result = currentScope[currentCursor]!;
+    const scope = currentScope;
+    const cursor = currentCursor;
     currentCursor = currentCursor! + 1;
-    return result;
+    return {
+        get current(): T {
+            return scope[cursor]!;
+        },
+        set current(to: T) {
+            scope[cursor] = to;
+        }
+    };
 }
 
 export type $Variable<T> = {
-    didInit: boolean
     current: T
 }
 
@@ -92,7 +103,7 @@ export type $Branch<T> = {
     get exit(): null,
 }
 
-let currentScope: $Variable<any>[] | null
+let currentScope: any[] | null
 let currentCursor: number | null
 let currentHandler: $EffectHandler | null
 

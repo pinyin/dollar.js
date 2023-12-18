@@ -1,4 +1,4 @@
-export function isShallowlyEqual(a: Array<any>, b: Array<any>) {
+export function isShallowlyEqual(a: any[], b: any[]) {
     if (a.length != b.length)
         return false;
     else {

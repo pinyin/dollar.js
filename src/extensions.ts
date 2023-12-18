@@ -2,13 +2,13 @@ import {$, $branch, $effect, $EffectHandlerCreator, $variable} from "./core";
 import {isShallowlyEqual} from "../lib/is_shallowly_equal";
 import {isDefined} from "../lib/is_defined";
 
-export function $useMemo<T>(init: () => T, deps: any[]): T {
+export function $useMemo<T>(define: () => T, deps: any[]): T {
     const prevDeps = $readPrev(deps, () => null);
     const value = $variable<T | null>(() => null);
 
     const $test = $branch(prevDeps === null || !isShallowlyEqual(deps, prevDeps));
     if ($test.branch) {
-        value.current = init();
+        value.current = define();
     }
     $test.exit;
 
@@ -45,8 +45,8 @@ export function useEffects(store: Set<() => void>): $EffectHandlerCreator {
     }
 }
 
-export function $useState<T>(init: () => T): State<T> {
-    const value = $variable(init);
+export function $useState<T>(define: () => T): State<T> {
+    const value = $variable(define);
 
     const setter = $((to: T) => {
         value.current = to;
@@ -64,8 +64,8 @@ export class State<T> {
     }
 }
 
-export function $readPrev<T>(current: T, init: () => T): T {
-    const value = $variable<T>(init);
+export function $readPrev<T>(current: T, define: () => T): T {
+    const value = $variable<T>(define);
     const result = value.current;
     value.current = current;
     return result;
