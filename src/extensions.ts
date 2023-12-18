@@ -16,15 +16,14 @@ export function $useMemo<T>(init: () => T, deps: any[]): T {
 }
 
 export function $useEffect(effect: () => () => void, deps: any[]) {
-    const prevCleanup = $variable(() => () => {
-    });
+    const prevCleanup = $variable<(() => void) | null>(() => null);
     const prevDeps = $readPrev(deps, () => null);
 
-    const $shouldCompute = $branch(prevDeps === null || !isShallowlyEqual(deps, prevDeps));
+    const $shouldCompute =
+        $branch(prevCleanup.current === null || prevDeps === null || !isShallowlyEqual(deps, prevDeps));
     if ($shouldCompute.branch) {
-        prevCleanup.current();
-        prevCleanup.current = $effect({[$UsingEffect]: effect()}) ?? (() => {
-        })
+        prevCleanup.current?.();
+        prevCleanup.current = $effect({[$UsingEffect]: effect()})
     }
     $shouldCompute.exit;
 }
