@@ -77,6 +77,17 @@ export function $scope<T>(branch: T): $Scope<T> {
     }
 
     const context = getContext()
+    if (!isDefined(branch)) {
+        setContext([null, null, null]);
+        return {
+            branch: null as T,
+            branches: new Map<null, never>() as Map<T, never>,
+            get exit(): null {
+                setContext(context);
+                return null;
+            }
+        }
+    }
     const branches = $variable(() => new Map<T, []>()).current;
     if (!branches.has(branch)) {
         branches.set(branch, []);
