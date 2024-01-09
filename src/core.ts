@@ -71,7 +71,7 @@ export type $Variable<T> = {
     current: T
 }
 
-export function $branch<T>(branch: T): $Branch<T> {
+export function $scope<T>(branch: T): $Scope<T> {
     if (!isDefined(currentScope)) {
         throw ('No available scope.');
     }
@@ -94,10 +94,10 @@ export function $branch<T>(branch: T): $Branch<T> {
             setContext(context)
             return null;
         }
-    } as $Branch<T>
+    } as $Scope<T>
 }
 
-export type $Branch<T> = {
+export type $Scope<T> = {
     readonly branch: T,
     readonly branches: Map<T, never> // only used for cleaning up other branches
     get exit(): null,

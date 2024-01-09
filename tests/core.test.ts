@@ -1,4 +1,4 @@
-import {$, $branch, $effect, $variable} from "../src";
+import {$, $effect, $scope, $variable} from "../src";
 
 describe('core logic of dollar-js', () => {
     describe('$ and $Variable', () => {
@@ -49,7 +49,7 @@ describe('core logic of dollar-js', () => {
     describe('$scope', () => {
         test('should create new variables stack', () => {
             const func = $((value: number) => {
-                const $results = $branch(value)
+                const $results = $scope(value)
                 const result = $variable(() => value);
                 $results.exit;
                 return result;

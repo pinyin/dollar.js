@@ -1,4 +1,4 @@
-import {$, $branch, $effect, $EffectHandlerCreator, $variable} from "./core";
+import {$, $effect, $EffectHandlerCreator, $scope, $variable} from "./core";
 import {isShallowlyEqual} from "../lib/is_shallowly_equal";
 import {isDefined} from "../lib/is_defined";
 
@@ -6,7 +6,7 @@ export function $useMemo<T>(define: () => T, deps: any[]): T {
     const prevDeps = $readPrev(deps, () => null);
     const value = $variable<T | null>(() => null);
 
-    const $test = $branch(prevDeps === null || !isShallowlyEqual(deps, prevDeps));
+    const $test = $scope(prevDeps === null || !isShallowlyEqual(deps, prevDeps));
     if ($test.branch) {
         value.current = define();
     }
@@ -20,7 +20,7 @@ export function $useEffect(effect: () => () => void, deps: any[]) {
     const prevDeps = $readPrev(deps, () => null);
 
     const $shouldCompute =
-        $branch(prevCleanup.current === null || prevDeps === null || !isShallowlyEqual(deps, prevDeps));
+        $scope(prevCleanup.current === null || prevDeps === null || !isShallowlyEqual(deps, prevDeps));
     if ($shouldCompute.branch) {
         prevCleanup.current?.();
         prevCleanup.current = $effect({[$UsingEffect]: effect()})
